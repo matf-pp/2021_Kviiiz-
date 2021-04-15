@@ -1,13 +1,33 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
+	"strconv"
 )
 
 // Poziv:	telnet localhost 8888
 
 func main() {
+
+	//  Provera pitanja
+	questions := get_questions(15)
+
+	points := 0
+	for _, q := range questions {
+		println(q.question_string())
+		var resp string
+		fmt.Scan(&resp)
+		if resp == q.Correct_answer {
+			println("Correct")
+			points += q.Points
+		} else {
+			println("Incorrect, correct is " + q.Correct_answer)
+		}
+		println("Points = " + strconv.Itoa(points))
+	}
+
 	s := newServer()
 	go s.run()
 
