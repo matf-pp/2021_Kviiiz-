@@ -101,12 +101,16 @@ func (s *server) msg(c *client, args []string) {
 		return
 	}
 
+	// TODO provera da li je game mode
+
 	msg := strings.Join(args[1:], " ")
 	c.room.broadcast(c, c.name+": "+msg)
 }
 
 func (s *server) start(c *client) {
 	c.room.broadcast(c, "Game start!\n")
+	// TODO new game
+	// TODO c.room.broadcastAll(nextQuestion())
 }
 
 func (s *server) quit(c *client) {

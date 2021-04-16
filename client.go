@@ -44,7 +44,7 @@ func (c *client) readInput() {
 				id:     CMD_ROOMS,
 				client: c,
 			}
-		case "/msg":
+		case "/msg": // TODO u default
 			c.commands <- command{
 				id:     CMD_MSG,
 				client: c,
