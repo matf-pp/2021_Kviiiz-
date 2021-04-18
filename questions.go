@@ -40,11 +40,16 @@ func (question Question) question_string() string {
 }
 
 func get_questions(n int) []Question {
+	if n > 50 { // sa sajta moze da se dohvati 50 pitanja max
+		n = 50
+	}
 	responses, err := http.Get("https://opentdb.com/api.php?amount=" + strconv.Itoa(n) + "&type=multiple")
+	var data []byte
 	if err != nil {
 		fmt.Printf("HTTP request filed %s\n", err)
+		return get_backup_questions(n)
 	}
-	data, _ := ioutil.ReadAll(responses.Body)
+	data, _ = ioutil.ReadAll(responses.Body)
 
 	questions := Reading{}
 	err = json.Unmarshal(data, &questions)
@@ -85,3 +90,43 @@ func get_questions(n int) []Question {
 	}
 	return questions_ret
 }
+
+func get_backup_questions(n int) []Question {
+	data, err := ioutil.ReadFile("backup_questions.json")
+	if err != nil {
+		var ret []Question
+		return ret
+	}
+	var questions []Question
+	json.Unmarshal(data, &questions)
+
+	rand.Seed(time.Now().Unix())
+
+	l := len(questions)
+	if l < n {
+		return questions
+	}
+
+	selected_questions := rand.Perm(l)[:n]
+
+	ret := make([]Question, n)
+	for i := 0; i < n; i++ {
+		ret[i] = questions[selected_questions[i]]
+	}
+	return ret
+}
+
+func update_backup_questions(n int) {
+	file, _ := json.Marshal(get_questions(n))
+	err := ioutil.WriteFile("backup_questions.json", file, 0664)
+	if err != nil {
+		println("Error: write backup questions")
+	}
+}
+
+// func main() {
+// 	update_backup_questions(50)
+// 	for i, q := range get_questions(10) {
+// 		fmt.Println(i, q.question_string())
+// 	}
+// }
