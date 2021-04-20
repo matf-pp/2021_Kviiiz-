@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
 	"strings"
 )
 
@@ -30,8 +31,8 @@ func (s *server) run() {
 			s.listRooms(cmd.client)
 		case CMD_MSG:
 			s.msg(cmd.client, cmd.args)
-		case CMD_START:
-			s.start(cmd.client)
+		case CMD_START_GAME:
+			s.startGame(cmd.client)
 		case CMD_QUIT:
 			s.quit(cmd.client)
 		}
@@ -81,7 +82,7 @@ func (s *server) join(c *client, args []string) {
 	s.quitCurrentRoom(c)
 	c.room = r
 
-	r.broadcast(c, fmt.Sprintf("%s joined the room", c.name))
+	r.broadcastFromClient(c, fmt.Sprintf("%s joined the room", c.name))
 
 	c.msg(fmt.Sprintf("welcome to %s", roomName))
 }
@@ -96,21 +97,55 @@ func (s *server) listRooms(c *client) {
 }
 
 func (s *server) msg(c *client, args []string) {
-	if len(args) < 2 {
-		c.msg("message is required, usage: /msg MSG")
-		return
-	}
-
 	// TODO provera da li je game mode
+	msg := strings.Join(args[0:], " ")
+	room := c.room
+	game := c.room.game
+	if game == nil {
+		room.broadcastFromClient(c, c.name+": "+msg)
+	} else {
+		correct := game.attemptAnswer(c, msg)
+		if correct {
+			c.msg("Tačan odgovor!")
+		} else {
+			c.msg("Netačan odgovor!")
+		}
 
-	msg := strings.Join(args[1:], " ")
-	c.room.broadcast(c, c.name+": "+msg)
+		if game.moveToNextQuestion() {
+			question, end := room.game.getNextQuestion()
+			if !end {
+				room.broadcastFromServer(question)
+			} else {
+				room.game = nil
+				room.broadcastFromServer("Game End!")
+				room.broadcastFromServer("Points:")
+				for _, member := range room.members {
+					room.broadcastFromServer(member.name + ": " + strconv.Itoa(game.getPoints(member)))
+				}
+			}
+		}
+	}
 }
 
-func (s *server) start(c *client) {
-	c.room.broadcast(c, "Game start!\n")
+func (s *server) startGame(c *client) {
 	// TODO new game
-	// TODO c.room.broadcastAll(nextQuestion())
+	// TODO c.room.broadcastFromServer(nextQuestion())
+	room := c.room
+	room.broadcastFromServer("Game start!")
+
+	members_slice := make([]*client, len(room.members))
+	for _, member := range room.members {
+		members_slice = append(members_slice, member)
+	}
+	fmt.Println(members_slice)
+	room.game = newGame(members_slice)
+	question, end := room.game.getNextQuestion()
+	if !end {
+		room.broadcastFromServer(question)
+	} else {
+		room.game = nil
+		room.broadcastFromServer("Game End!")
+	}
 }
 
 func (s *server) quit(c *client) {
@@ -126,6 +161,6 @@ func (s *server) quitCurrentRoom(c *client) {
 	if c.room != nil {
 		oldRoom := s.rooms[c.room.name]
 		delete(s.rooms[c.room.name].members, c.conn.RemoteAddr())
-		oldRoom.broadcast(c, fmt.Sprintf("%s has left the room", c.name))
+		oldRoom.broadcastFromClient(c, fmt.Sprintf("%s has left the room", c.name))
 	}
 }

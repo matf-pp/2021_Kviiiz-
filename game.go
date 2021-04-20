@@ -8,6 +8,7 @@ package main
 type game struct {
 	question_list []Question
 	points        map[*client]int
+	br_pitanja    int // Zbog testiranja
 }
 
 func newGame(members []*client) *game {
@@ -20,13 +21,18 @@ func newGame(members []*client) *game {
 	return &game{
 		question_list: get_questions(10),
 		points:        m,
+		br_pitanja:    0,
 	}
 
 }
 
 // get next question -> string getNextQuestion() {question string fja}
-func (g *game) getNextQuestion() bool {
-	return true
+func (g *game) getNextQuestion() (string, bool) {
+	if g.br_pitanja == 4 {
+		return "", true
+	}
+	g.br_pitanja += 1
+	return "Pitanje", false
 }
 
 // bool attemptAnswer(client, string answer)

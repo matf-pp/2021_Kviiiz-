@@ -45,14 +45,10 @@ func (c *client) readInput() {
 				client: c,
 			}
 		case "/msg": // TODO u default
-			c.commands <- command{
-				id:     CMD_MSG,
-				client: c,
-				args:   args,
-			}
+
 		case "/start":
 			c.commands <- command{
-				id:     CMD_START,
+				id:     CMD_START_GAME,
 				client: c,
 				args:   args,
 			}
@@ -62,7 +58,16 @@ func (c *client) readInput() {
 				client: c,
 			}
 		default:
-			c.err(fmt.Errorf("unknown command: %s", cmd))
+			if cmd[0] == '/' {
+				c.err(fmt.Errorf("unknown command: %s", cmd))
+			} else {
+				//msg
+				c.commands <- command{
+					id:     CMD_MSG,
+					client: c,
+					args:   args,
+				}
+			}
 		}
 	}
 }
