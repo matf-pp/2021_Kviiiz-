@@ -1,27 +1,26 @@
-// TODO struktura game
-// lista pitanja -> question_list
-// mapa poeni - inicijalizovati na 0 -> points
-// mapa attempted_answers -> ko je pokusao da da odg
-
 package main
 
 type game struct {
-	question_list []Question
-	points        map[*client]int
-	br_pitanja    int // Zbog testiranja
+	question_list     []Question
+	points            map[*client]int
+	attempted_answers map[*client]bool // svi koji su pokusali da odg na trenutno pitanje
+	br_pitanja        int              // Zbog testiranja
 }
 
 func newGame(members []*client) *game {
 	m := make(map[*client]int)
+	a := make(map[*client]bool)
 
 	for _, ptr := range members {
 		m[ptr] = 0
+		a[ptr] = false
 	}
 
 	return &game{
-		question_list: get_questions(10),
-		points:        m,
-		br_pitanja:    0,
+		question_list:     get_questions(10),
+		points:            m,
+		attempted_answers: a,
+		br_pitanja:        0,
 	}
 
 }
@@ -31,21 +30,34 @@ func (g *game) getNextQuestion() (string, bool) {
 	if g.br_pitanja == 4 {
 		return "", true
 	}
+	for k, _ := range g.attempted_answers {
+		g.attempted_answers[k] = false
+	}
 	g.br_pitanja += 1
-	return "Pitanje", false
+	return g.question_list[g.br_pitanja].question_string(), false
 }
 
 // bool attemptAnswer(client, string answer)
 func (g *game) attemptAnswer(c *client, ans string) bool {
-	return true
+	g.attempted_answers[c] = true
+	if g.question_list[g.br_pitanja].Correct_answer == ans {
+		g.points[c] = g.points[c] + 1
+		return true
+	}
+	return false
 }
 
 // bool moveToNextQuestion() -> ako su svi odg onda true
 func (g *game) moveToNextQuestion() bool {
+	for _, v := range g.attempted_answers {
+		if !v {
+			return false
+		}
+	}
 	return true
 }
 
 // int getPoints(client)
 func (g *game) getPoints(c *client) int {
-	return 0
+	return g.points[c]
 }
