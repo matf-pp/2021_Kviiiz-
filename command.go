@@ -9,6 +9,7 @@ const (
 	CMD_MSG
 	CMD_START_GAME
 	CMD_QUIT
+	CMD_HELP
 )
 
 type command struct {

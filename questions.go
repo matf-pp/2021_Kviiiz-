@@ -33,10 +33,15 @@ type Question struct {
 }
 
 func (question Question) question_string() string {
-	return html.UnescapeString(question.Text + "\na)\t" + question.Answers["a"] +
-		"\nb)\t" + question.Answers["b"] +
-		"\nc)\t" + question.Answers["c"] +
-		"\nd)\t" + question.Answers["d"])
+	colors := [3]string{"\033[32m", "\033[34m", "\033[31m"}
+	return colors[question.Points-1] + html.UnescapeString(question.Text+"\na)\t"+question.Answers["a"]+
+		"\nb)\t"+question.Answers["b"]+
+		"\nc)\t"+question.Answers["c"]+
+		"\nd)\t"+question.Answers["d"]) + "\033[0m"
+	// return html.UnescapeString(question.Text + "\na)\t" + question.Answers["a"] +
+	// 	"\nb)\t" + question.Answers["b"] +
+	// 	"\nc)\t" + question.Answers["c"] +
+	// 	"\nd)\t" + question.Answers["d"])
 }
 
 func get_questions(n int) []Question {

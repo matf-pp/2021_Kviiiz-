@@ -14,7 +14,26 @@ type client struct {
 	commands chan<- command
 }
 
+var help_message string = `Commands:
+/name new_name -> change name
+/join room_name -> join room
+/rooms -> list available rooms
+/start -> start the quiz
+/quit -> leave the room
+/help -> see help`
+
+var welcome_string string = `Welcome to Kviiiz!
+You can use following commands
+/name new_name -> change name
+/join room_name -> join room
+/rooms -> list available rooms
+/start -> start the quiz
+/quit -> leave the room
+/help -> see help`
+
 func (c *client) readInput() {
+	c.msg(welcome_string)
+
 	for {
 		msg, err := bufio.NewReader(c.conn).ReadString('\n')
 		if err != nil {
@@ -44,7 +63,6 @@ func (c *client) readInput() {
 				id:     CMD_ROOMS,
 				client: c,
 			}
-		case "/msg": // TODO u default
 
 		case "/start":
 			c.commands <- command{
@@ -57,6 +75,8 @@ func (c *client) readInput() {
 				id:     CMD_QUIT,
 				client: c,
 			}
+		case "/help":
+			c.msg(help_message)
 		default:
 			if cmd[0] == '/' {
 				c.err(fmt.Errorf("unknown command: %s", cmd))

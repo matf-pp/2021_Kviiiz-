@@ -35,6 +35,8 @@ func (s *server) run() {
 			s.startGame(cmd.client)
 		case CMD_QUIT:
 			s.quit(cmd.client)
+		case CMD_HELP:
+			s.msg(cmd.client, cmd.args)
 		}
 	}
 }
