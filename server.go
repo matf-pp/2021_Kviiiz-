@@ -76,6 +76,7 @@ func (s *server) join(c *client, args []string) {
 		r = &room{
 			name:    roomName,
 			members: make(map[net.Addr]*client),
+			host:    c,
 		}
 		s.rooms[roomName] = r
 	}
@@ -133,9 +134,13 @@ func (s *server) startGame(c *client) {
 	// TODO new game
 	// TODO c.room.broadcastFromServer(nextQuestion())
 	room := c.room
+	if c != room.host {
+		room.broadcastFromServer("Only the host can start the game!\nThe host is " + room.host.name)
+		return
+	}
 	room.broadcastFromServer("Game start!")
 
-	members_slice := make([]*client, len(room.members))
+	members_slice := make([]*client, 0)
 	for _, member := range room.members {
 		members_slice = append(members_slice, member)
 	}

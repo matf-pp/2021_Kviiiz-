@@ -17,7 +17,7 @@ func newGame(members []*client) *game {
 	}
 
 	return &game{
-		question_list:     get_questions(10),
+		question_list:     get_questions(11),
 		points:            m,
 		attempted_answers: a,
 		br_pitanja:        0,
@@ -27,10 +27,10 @@ func newGame(members []*client) *game {
 
 // get next question -> string getNextQuestion() {question string fja}
 func (g *game) getNextQuestion() (string, bool) {
-	if g.br_pitanja == 4 {
+	if g.br_pitanja == len(g.question_list)-1 {
 		return "", true
 	}
-	for k, _ := range g.attempted_answers {
+	for k := range g.attempted_answers {
 		g.attempted_answers[k] = false
 	}
 	g.br_pitanja += 1
@@ -50,7 +50,7 @@ func (g *game) attemptAnswer(c *client, ans string) bool {
 // bool moveToNextQuestion() -> ako su svi odg onda true
 func (g *game) moveToNextQuestion() bool {
 	for _, v := range g.attempted_answers {
-		if !v {
+		if v == false {
 			return false
 		}
 	}
