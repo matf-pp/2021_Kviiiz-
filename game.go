@@ -37,20 +37,23 @@ func (g *game) getNextQuestion() (string, bool) {
 	return g.question_list[g.br_pitanja].question_string(), false
 }
 
-// bool attemptAnswer(client, string answer)
-func (g *game) attemptAnswer(c *client, ans string) bool {
+// int attemptAnswer(client, string answer)
+func (g *game) attemptAnswer(c *client, ans string) int {
+	if g.attempted_answers[c] {
+		return -1
+	}
 	g.attempted_answers[c] = true
 	if g.question_list[g.br_pitanja].Correct_answer == ans {
 		g.points[c] = g.points[c] + 1
-		return true
+		return 1
 	}
-	return false
+	return 0
 }
 
 // bool moveToNextQuestion() -> ako su svi odg onda true
 func (g *game) moveToNextQuestion() bool {
 	for _, v := range g.attempted_answers {
-		if v == false {
+		if !v {
 			return false
 		}
 	}

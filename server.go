@@ -114,10 +114,12 @@ func (s *server) msg(c *client, args []string) {
 		room.broadcastFromClient(c, c.name+": "+msg)
 	} else {
 		correct := room.game.attemptAnswer(c, msg)
-		if correct {
+		if correct == 1 {
 			c.msg("Correct!")
-		} else {
+		} else if correct == 0 {
 			c.msg("Wrong answer!")
+		} else if correct == -1 {
+			c.msg("Invalid attempt!")
 		}
 
 		if room.game.moveToNextQuestion() {
