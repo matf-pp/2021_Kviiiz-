@@ -62,17 +62,10 @@ func (g *game) getPoints(c *client) int {
 	return g.points[c]
 }
 
-// Vraca true ako je uspesno izbacio klijenta iz igre, a vraca false ako nema
-// vise nikog u igri i tada igra mora da se ugasi
-func (g *game) leaveGame(c *client) bool {
-	if len(g.attempted_answers) == 0 {
-		return false
-	}
-
+func (g *game) leaveGame(c *client) {
 	_, ok := g.attempted_answers[c]
 	if ok {
 		delete(g.attempted_answers, c)
 		delete(g.points, c)
 	}
-	return true
 }

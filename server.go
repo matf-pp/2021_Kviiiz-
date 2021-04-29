@@ -175,5 +175,21 @@ func (s *server) quitCurrentRoom(c *client) {
 		oldRoom := s.rooms[c.room.name]
 		delete(s.rooms[c.room.name].members, c.conn.RemoteAddr())
 		oldRoom.broadcastFromClient(c, fmt.Sprintf("%s has left the room", c.name))
+		if len(oldRoom.members) == 0 {
+			delete(s.rooms, c.room.name)
+		} else {
+			if oldRoom.game != nil {
+				// Izbaci ga iz game-a
+				oldRoom.game.leaveGame(c)
+			}
+			if c == oldRoom.host {
+				// Dodeli novog hosta
+				for _, cl := range oldRoom.members {
+					oldRoom.host = cl
+					cl.msg("You are now the host.")
+					break
+				}
+			}
+		}
 	}
 }
