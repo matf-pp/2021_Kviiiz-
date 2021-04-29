@@ -80,14 +80,20 @@ func (s *server) join(c *client, args []string) {
 		}
 		s.rooms[roomName] = r
 	}
-	r.members[c.conn.RemoteAddr()] = c
 
-	s.quitCurrentRoom(c)
-	c.room = r
+	if r.game == nil {
+		r.members[c.conn.RemoteAddr()] = c
 
-	r.broadcastFromClient(c, fmt.Sprintf("%s joined the room", c.name))
+		s.quitCurrentRoom(c)
+		c.room = r
 
-	c.msg(fmt.Sprintf("welcome to %s", roomName))
+		r.broadcastFromClient(c, fmt.Sprintf("%s joined the room", c.name))
+
+		c.msg(fmt.Sprintf("welcome to %s", roomName))
+	} else {
+		c.msg("Can't join, game is in progress!")
+	}
+
 }
 
 func (s *server) listRooms(c *client) {
@@ -100,21 +106,21 @@ func (s *server) listRooms(c *client) {
 }
 
 func (s *server) msg(c *client, args []string) {
-	// TODO provera da li je game mode
 	msg := strings.Join(args[0:], " ")
 	room := c.room
-	game := c.room.game
-	if game == nil {
+	if room == nil {
+		c.msg("You have to be in a room to send messages.")
+	} else if room.game == nil {
 		room.broadcastFromClient(c, c.name+": "+msg)
 	} else {
-		correct := game.attemptAnswer(c, msg)
+		correct := room.game.attemptAnswer(c, msg)
 		if correct {
-			c.msg("Tačan odgovor!")
+			c.msg("Correct!")
 		} else {
-			c.msg("Netačan odgovor!")
+			c.msg("Wrong answer!")
 		}
 
-		if game.moveToNextQuestion() {
+		if room.game.moveToNextQuestion() {
 			question, end := room.game.getNextQuestion()
 			if !end {
 				room.broadcastFromServer(question)
@@ -123,7 +129,7 @@ func (s *server) msg(c *client, args []string) {
 				room.broadcastFromServer("Game End!")
 				room.broadcastFromServer("Points:")
 				for _, member := range room.members {
-					room.broadcastFromServer(member.name + ": " + strconv.Itoa(game.getPoints(member)))
+					room.broadcastFromServer(member.name + ": " + strconv.Itoa(room.game.getPoints(member)))
 				}
 			}
 		}
@@ -131,11 +137,9 @@ func (s *server) msg(c *client, args []string) {
 }
 
 func (s *server) startGame(c *client) {
-	// TODO new game
-	// TODO c.room.broadcastFromServer(nextQuestion())
 	room := c.room
 	if c != room.host {
-		room.broadcastFromServer("Only the host can start the game!\nThe host is " + room.host.name)
+		c.msg("Only the host can start the game!\nThe host is " + room.host.name)
 		return
 	}
 	room.broadcastFromServer("Game start!")
