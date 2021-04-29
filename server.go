@@ -46,7 +46,7 @@ func (s *server) newClient(conn net.Conn) {
 
 	c := &client{
 		conn:     conn,
-		name:     "anonymous",
+		name:     "",
 		commands: s.commands,
 	}
 
@@ -58,14 +58,30 @@ func (s *server) name(c *client, args []string) {
 		c.msg("name is required. usage: /name NAME")
 		return
 	}
-
-	c.name = args[1]
-	c.msg(fmt.Sprintf("Hello %s! :)", c.name))
+	if args[1] == "" {
+		c.msg("Invalid name.")
+	} else {
+		for _, room := range s.rooms {
+			for _, cl := range room.members {
+				if args[1] == cl.name {
+					c.msg("The name already exists.")
+					return
+				}
+			}
+		}
+		c.name = args[1]
+		c.msg(fmt.Sprintf("Hello %s! :)", c.name))
+	}
 }
 
 func (s *server) join(c *client, args []string) {
 	if len(args) < 2 {
 		c.msg("room name is required. usage: /join ROOM_NAME")
+		return
+	}
+
+	if c.name == "" {
+		c.msg("You have to choose a name.")
 		return
 	}
 
