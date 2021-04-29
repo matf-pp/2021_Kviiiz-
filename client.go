@@ -78,15 +78,15 @@ func (c *client) readInput() {
 		case "/help":
 			c.msg(help_message)
 		default:
-			if cmd[0] == '/' {
-				c.err(fmt.Errorf("unknown command: %s", cmd))
-			} else {
+			if len(cmd) == 0 || cmd[0] != '/' {
 				//msg
 				c.commands <- command{
 					id:     CMD_MSG,
 					client: c,
 					args:   args,
 				}
+			} else {
+				c.err(fmt.Errorf("unknown command: %s", cmd))
 			}
 		}
 	}

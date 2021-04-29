@@ -125,12 +125,12 @@ func (s *server) msg(c *client, args []string) {
 			if !end {
 				room.broadcastFromServer(question)
 			} else {
-				room.game = nil
 				room.broadcastFromServer("Game End!")
-				room.broadcastFromServer("Points:")
+				room.broadcastFromServer("=======Points=======")
 				for _, member := range room.members {
-					room.broadcastFromServer(member.name + ": " + strconv.Itoa(room.game.getPoints(member)))
+					room.broadcastFromServer("  " + member.name + ": " + strconv.Itoa(room.game.getPoints(member)))
 				}
+				room.game = nil
 			}
 		}
 	}
