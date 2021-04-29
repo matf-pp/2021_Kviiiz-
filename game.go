@@ -25,7 +25,6 @@ func newGame(members []*client) *game {
 
 }
 
-// get next question -> string getNextQuestion() {question string fja}
 func (g *game) getNextQuestion() (string, bool) {
 	if g.br_pitanja == len(g.question_list)-1 {
 		return "", true
@@ -37,14 +36,13 @@ func (g *game) getNextQuestion() (string, bool) {
 	return g.question_list[g.br_pitanja].question_string(), false
 }
 
-// int attemptAnswer(client, string answer)
 func (g *game) attemptAnswer(c *client, ans string) int {
 	if g.attempted_answers[c] {
 		return -1
 	}
 	g.attempted_answers[c] = true
 	if g.question_list[g.br_pitanja].Correct_answer == ans {
-		g.points[c] = g.points[c] + 1
+		g.points[c] = g.points[c] + g.question_list[g.br_pitanja].Points
 		return 1
 	}
 	return 0
@@ -60,7 +58,21 @@ func (g *game) moveToNextQuestion() bool {
 	return true
 }
 
-// int getPoints(client)
 func (g *game) getPoints(c *client) int {
 	return g.points[c]
+}
+
+// Vraca true ako je uspesno izbacio klijenta iz igre, a vraca false ako nema
+// vise nikog u igri i tada igra mora da se ugasi
+func (g *game) leaveGame(c *client) bool {
+	if len(g.attempted_answers) == 0 {
+		return false
+	}
+
+	_, ok := g.attempted_answers[c]
+	if ok {
+		delete(g.attempted_answers, c)
+		delete(g.points, c)
+	}
+	return true
 }
