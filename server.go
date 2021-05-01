@@ -6,6 +6,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type server struct {
@@ -76,12 +77,12 @@ func (s *server) name(c *client, args []string) {
 
 func (s *server) join(c *client, args []string) {
 	if len(args) < 2 {
-		c.msg("room name is required. usage: /join ROOM_NAME")
+		c.msg("room name is required. usage: /join room_name")
 		return
 	}
 
 	if c.name == "" {
-		c.msg("You have to choose a name.")
+		c.msg("You have to choose a name.\nCommand is /name your_name")
 		return
 	}
 
@@ -139,23 +140,44 @@ func (s *server) msg(c *client, args []string) {
 		}
 
 		if room.game.moveToNextQuestion() {
-			question, end := room.game.getNextQuestion()
-			if !end {
-				room.broadcastFromServer(question)
-			} else {
-				room.broadcastFromServer("Game End!")
-				room.broadcastFromServer("=======Points=======")
-				for _, member := range room.members {
-					room.broadcastFromServer("  " + member.name + ": " + strconv.Itoa(room.game.getPoints(member)))
-				}
-				room.game = nil
-			}
+			s.nextQuestion(room)
 		}
+	}
+}
+
+func (s *server) nextQuestion(r *room) {
+	question, end := r.game.getNextQuestion()
+	if !end {
+		r.broadcastFromServer(question)
+		rbrQuestion := r.game.br_pitanja
+		checkFunc := func(rbr int, r **room) func() {
+			return func() {
+				// if r != nil && (*r) != nil && (*r).game != nil {
+				// 	println((*r).game.br_pitanja, " ", rbr)
+				// }
+				if r != nil && (*r) != nil && (*r).game != nil && (*r).game.br_pitanja == rbr {
+					s.nextQuestion(*r)
+				}
+			}
+		}(rbrQuestion, &r)
+		time.AfterFunc(20*time.Second, checkFunc)
+
+	} else {
+		r.broadcastFromServer("Game End!")
+		r.broadcastFromServer("=======Points=======")
+		for _, member := range r.members {
+			r.broadcastFromServer("  " + member.name + ": " + strconv.Itoa(r.game.getPoints(member)))
+		}
+		r.game = nil
 	}
 }
 
 func (s *server) startGame(c *client) {
 	room := c.room
+	if room == nil {
+		c.msg("You have to join room first!\nCommand is /join room_name")
+		return
+	}
 	if c != room.host {
 		c.msg("Only the host can start the game!\nThe host is " + room.host.name)
 		return
@@ -168,13 +190,15 @@ func (s *server) startGame(c *client) {
 	}
 	fmt.Println(members_slice)
 	room.game = newGame(members_slice)
-	question, end := room.game.getNextQuestion()
-	if !end {
-		room.broadcastFromServer(question)
-	} else {
-		room.game = nil
-		room.broadcastFromServer("Game End!")
-	}
+	s.nextQuestion(room)
+
+	// question, end := room.game.getNextQuestion()
+	// if !end {
+	//room.broadcastFromServer(question)
+	// } else {
+	// room.game = nil
+	// room.broadcastFromServer("Game End!")
+	// }
 }
 
 func (s *server) quit(c *client) {
